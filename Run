@@ -1,4 +1,5 @@
 //TODO : if the robot needs to go different speeds at different times, some stuff will have to be adjusted 
+//
 
 import rxtxrobot.*;
 
@@ -18,22 +19,23 @@ public class Run {
 		r.attachServo(RXTXRobot.SERVO1, 5); //Connect the servos to the Arduino
 		
 		double backup = .5; //this is the distance in meters the robot should back up after bumping the wall in order to turn
+		int pausetime = 500; //the amount of time the robot will pause between segments of the run
 		
 		//run forward
 		run1.move(3);
-		r.sleep(500);
+		r.sleep(pausetime);
 		
 		//lift boom
 		run1.liftBoom();
-		r.sleep(500);
+		r.sleep(pausetime);
 		
 		//turn 90 degrees counterclockwise
 		run1.turn(90);
-		r.sleep(500);
+		r.sleep(pausetime);
 		
 		//run forward
 		run1.move(2);
-		r.sleep(500);
+		r.sleep(pausetime);
 		
 //TODO calibrate numbers for detecting the gap		
 		//turn & detect gap
@@ -56,6 +58,7 @@ public class Run {
 		run1.moveUntilBumped();
 		run1.move(backup);
 		run1.turn(180);
+		r.sleep(pausetime);
 		
 		//cross bridge
 		run1.moveUntilBumped();
@@ -75,36 +78,39 @@ public class Run {
 	
 	public void turn(int degrees) {
 //I'm just guessing on all the numbers here		
-	//	int s = getMoveSpeed(distance);
-		int x = 250;
-		int t = getTurnTime(degrees);
+		
+		int turnspeed = 250;
+		int turntime = getTurnTime(degrees);
 		//s was 250 for Sprint 2
 		//t was 7700 for Sprint 3
 
 		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, x, RXTXRobot.MOTOR2, x, 0); // Run both motors forward indefinitely
-		r.sleep(t); // Pause execution for 7700 ticks, but the motors keep running.
+		r.runMotor(RXTXRobot.MOTOR1, turnspeed, RXTXRobot.MOTOR2, turnspeed, 0); // Run both motors forward indefinitely
+		r.sleep(turntime); // Pause execution for turntime in ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); // Stop both motors
 		r.close();
 	}
 	
 	public void move(double distance) {
 	//	int s = getMoveSpeed(distance);
-		int s = 250;
-		int t = getMoveTime(distance);
+		int movespeed = 250;
+		int movetime = getMoveTime(distance);
 		//s was 250 for Sprint 2
 		//t was 7700 for Sprint 3
 
 		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, s, RXTXRobot.MOTOR2, -s, 0); // Run both motors forward indefinitely
-		r.sleep(t); // Pause execution for 7700 ticks, but the motors keep running.
+		r.runMotor(RXTXRobot.MOTOR1, movespeed, RXTXRobot.MOTOR2, -movespeed, 0); // Run both motors forward indefinitely
+		r.sleep(movetime); // Pause execution for movetime ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1,0,RXTXRobot.MOTOR2,0,0); // Stop both motors
 	}
 	
 	public void liftBoom() {
 //===========Move Servo		
 		r.moveServo(RXTXRobot.SERVO1, 180); // Move Servo 1 to location 30
-		r.sleep(4000);
+	
+	// TODO make sure the boom works	
+	// Does the boom need to be lowered back? or does r.close() move it back	
+	//	r.sleep(4000);
 	//	r.moveServo(RXTXRobot.SERVO1, 90); // Move Servo 1 to location 30
 	//	r.sleep(2000);
 		
