@@ -1,74 +1,155 @@
-//TODO : if the robot needs to go different speeds at different times, some stuff will have to be adjusted 
-//
+//Positive degrees means it is turning is right
 
 import rxtxrobot.*;
-
 
 public class Run {
 	int runnumber;
 	public static Run run1 = new Run(1);
 	public static RXTXRobot r = new ArduinoUno(); // Create RXTXRobot object
-	final private static int PING_PIN = 4;
-		
+	
+//======================== Pins =======================//	
+	// Digital Pins
+	final private static int PING_PIN = 11;
+	final private static int servo1pin = 9; //boom arm servo
+	final private static int servo2pin = 8; //ping pong ball servo	
+	final private static int motor1pin = 5;
+	final private static int motor2pin = 6;
+	
+	// Analog Pins
+	final private static int bsAnalogPin = 2;
+
+//================== Other variables ==================//
+	final private static double backup =  (-1 * .2) ; //this is the distance in meters the robot should back up after bumping the wall in order to turn
+	final private static int pausetime = 1000; //the amount of time the robot will pause between segments of the run
+	final private static int speed1 = 250; //forward speed
+	final private static int speed2 = 150; //backup speed
+	final private static double rturncal = 15; //should be around 16
+	final private static double lturncal = 13.3;
+	//negative degrees is left
+	final private static double movecal = 2567; //should be around 2567
+	final private static double lrcal = 45; //should be around 42 //negative is more left
+	final private static double windcal = .1;
+	private static boolean notBumped;
+//=====================================================//
+	
 	public static void main(String[] args) {
 		r.setPort("COM3"); // Set the port to COM3
-		r.setVerbose(true); // Turn on debugging messages
+//		r.setVerbose(true); // Turn on debugging messages
 		r.connect();		
-		r.attachMotor(RXTXRobot.MOTOR1, 6); //left motor  attach motors
-		r.attachMotor(RXTXRobot.MOTOR2, 7); //right motor
-		r.attachServo(RXTXRobot.SERVO1, 5); //Connect the servos to the Arduino
+		r.attachMotor(RXTXRobot.MOTOR1, motor1pin); //left motor  attach motors
+		r.attachMotor(RXTXRobot.MOTOR2, motor2pin); //right motor
+		r.attachServo(RXTXRobot.SERVO1, servo1pin); //Connect SERVO1, the boom to servo1pin
+		r.attachServo(RXTXRobot.SERVO2, servo2pin); //Connect SERVO2, the pingpong ball arm to servo2pin
+		System.out.println();
+		r.sleep(500);
 		
-		double backup = .5; //this is the distance in meters the robot should back up after bumping the wall in order to turn
-		int pausetime = 500; //the amount of time the robot will pause between segments of the run
-		
-		//run forward
-		run1.move(3);
+		//CALIBRATION
+//		run1.move(1, speed1);
+//		run1.turn(360);
+//	 	run1.turn(-360);	
+//		run1.liftBoom(); 
+//		run1.moveUntilBumped();
+
+/*		// 1. starting box
+		run1.move(.5, speed1);
+		r.sleep(pausetime);
+		run1.turn(93);
+	
+ 		// 2. dynamic wall
+ 		run1.moveUntilBumped();
+ 		run1.move(backup, speed2);
+		boolean dynamicwall = true;
+ 		while (dynamicwall) {
+ 			if (run1.getPing() < 40) {
+ 				System.out.println("The wall is still there");
+ 				continue;
+ 			} else {
+ 				System.out.println("The wall has been lifted! Proceeding.");
+ 				dynamicwall = false;
+ 				break;
+ 			}
+ 		}
+ 		
+ 		r.sleep(3000);
+ 		
+ 		// 3. run forward
+		run1.move(1.2, speed1 + 70);
 		r.sleep(pausetime);
 		
-		//lift boom
+		// 4. lift boom
 		run1.liftBoom();
 		r.sleep(pausetime);
 		
-		//turn 90 degrees counterclockwise
-		run1.turn(90);
+		// 5. turn 90 degrees counterclockwise
+		run1.turn(-90);
 		r.sleep(pausetime);
 		
-		//run forward
-		run1.move(2);
-		r.sleep(pausetime);
+		// 6. run forward
+		run1.move(1, speed1);
+		r.sleep(pausetime);							System.out.println("Line 87");
 		
 //TODO calibrate numbers for detecting the gap		
-		//turn & detect gap
-		run1.turn(90);
-		int location = run1.detectGap();
-		if (location == 1) {
-			run1.turn(45);
-			run1.move(backup);
-			run1.turn(-45);
-		} else if (location == 2) {
-			run1.turn(-45);
-			run1.move(backup);
-			run1.turn(45);
+		// 7. turn & detect gap
+		run1.turn(-115);							System.out.println("First left turn.");
+		boolean nogap = true;						System.out.println("Line 92");
+		boolean b;
+		while(nogap) {
+			b = run1.detectGap();					System.out.println("");
+			if (b == false) {
+				System.out.println("no gap.");
+				run1.turn(90);
+				run1.move(.25,  speed1);
+				run1.turn(-90);
+			} else {
+				System.out.println("gap.");
+				run1.turn(90);
+				run1.move(.2, speed1);
+				run1.turn(-90);
+				break;
+//				run1.move(3, speed1);
+			}
 		}
 		
-		//orient with bridge
+		
+
+*/
+		// 8. orient with bridge
+		run1.moveUntilBumped(); 		System.out.println("Line 108");
+		run1.move(backup, speed2);		
+//		r.sleep(pausetime);	
+		
+		run1.turn(-90);					System.out.println("Line 112");
+//		r.sleep(pausetime);
+		
 		run1.moveUntilBumped();
-		run1.move(backup);
+		run1.move(backup, speed2);		System.out.println("Line 116");
+//		r.sleep(pausetime);
+		
+		run1.turn(90);					System.out.println("Line 119");
+//		r.sleep(pausetime);
+		
+		run1.moveUntilBumped();			System.out.println("Line 122");
+		run1.move(backup, speed2);
+//		r.sleep(pausetime);
+		
+		run1.turn(90);					System.out.println("Line 126");
+		
+/*		// 9. cross bridge
+		run1.moveUntilBumped();
+		run1.move(backup, speed2);
 		run1.turn(90);
 		run1.moveUntilBumped();
-		run1.move(backup);
-		run1.turn(180);
-		r.sleep(pausetime);
 		
-		//cross bridge
-		run1.moveUntilBumped();
-		run1.move(backup);
-		run1.turn(-90);
-		run1.moveUntilBumped();
-		
-		//conductivity
+/*		// 10. conductivity
 		run1.conductivity();
-		
+*/
+ 		// 11. closing
+		System.out.println("Closing in 3");
+		r.sleep(1000);
+		System.out.println("Closing in 2");
+		r.sleep(1000);
+		System.out.println("Closing in 1");
+		r.sleep(1000);
 		r.close();
 		
 	}
@@ -78,8 +159,12 @@ public class Run {
 	
 	public void turn(int degrees) {
 //I'm just guessing on all the numbers here		
-		
-		int turnspeed = 250;
+		int turnspeed;
+		if (degrees > 0) {
+			turnspeed = 250;
+		} else {
+			turnspeed = -250;
+		}
 		int turntime = getTurnTime(degrees);
 		//s was 250 for Sprint 2
 		//t was 7700 for Sprint 3
@@ -88,33 +173,35 @@ public class Run {
 		r.runMotor(RXTXRobot.MOTOR1, turnspeed, RXTXRobot.MOTOR2, turnspeed, 0); // Run both motors forward indefinitely
 		r.sleep(turntime); // Pause execution for turntime in ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); // Stop both motors
-		r.close();
 	}
 	
-	public void move(double distance) {
+	public void move(double distance, int speed) {
 	//	int s = getMoveSpeed(distance);
-		int movespeed = 250;
+		int movespeed;
+		if (distance > 0) {
+			movespeed = speed;
+		} else if (distance < 0) {
+			movespeed = -1 * speed;
+		} else {
+			movespeed = 0;
+		}
 		int movetime = getMoveTime(distance);
 		//s was 250 for Sprint 2
 		//t was 7700 for Sprint 3
-
+		
 		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, movespeed, RXTXRobot.MOTOR2, -movespeed, 0); // Run both motors forward indefinitely
+		r.runMotor(RXTXRobot.MOTOR1, (int)(movespeed - lrcal), RXTXRobot.MOTOR2, (-1 * movespeed), 0); // Run both motors forward indefinitely
 		r.sleep(movetime); // Pause execution for movetime ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1,0,RXTXRobot.MOTOR2,0,0); // Stop both motors
 	}
 	
 	public void liftBoom() {
 //===========Move Servo		
-		r.moveServo(RXTXRobot.SERVO1, 180); // Move Servo 1 to location 30
+		r.moveServo(RXTXRobot.SERVO1, 5); 
 	
-	// TODO make sure the boom works	
-	// Does the boom need to be lowered back? or does r.close() move it back	
-	//	r.sleep(4000);
-	//	r.moveServo(RXTXRobot.SERVO1, 90); // Move Servo 1 to location 30
-	//	r.sleep(2000);
 		
-//===========Temperature		
+//=========== Temperature		
+		System.out.println("Getting Thermometer reading: ");
 		r.refreshAnalogPins(); // Cache the Analog pin information	
 		int thermoAnalogPin = 1; //this is the long red and black thermister
 		 
@@ -127,7 +214,7 @@ public class Run {
 			AnalogPin temp = r.getAnalogPin(thermoAnalogPin); //get pin data
 			rawData[c] = temp.getValue();
 			rawTotal = rawTotal + rawData[c];
-			System.out.println(c + 1 + "\t" + rawData[c]);
+//			System.out.println(c + 1 + "\t" + rawData[c]);
 			r.sleep(100);
 		}
     
@@ -135,13 +222,14 @@ public class Run {
 		System.out.println("The probe read the value: " + rawAvg);
 		System.out.println("In volts: " + (rawAvg * (5.0/1023.0)));
 		
-		double slope = -11.05667506;
-		double intercept = 3827.700252;
+		double slope = -11.05667506;										//was -11.05667506
+		double intercept = 3827.700252;										//was 3827.700252
 		double temp = ((rawAvg - intercept)/slope)-273;
 		System.out.println();
-		System.out.println("It is " + temp + " degrees Celsius");
+		System.out.println("It is " + (temp + 2.5) + " degrees Celsius");
 		
-//====================Wind readings
+//=========== Wind readings
+		System.out.println("Getting Anamometer reading: ");
 		r.refreshAnalogPins(); // Cache the Analog pin information	
 		
 		int windAnalogPin = 0;
@@ -158,7 +246,7 @@ public class Run {
 			Totaltemp1 = Totaltemp1 + temp0.getValue();
 			Totaltemp2 = Totaltemp2 + temp2.getValue();
 			
-			r.sleep(500);
+			r.sleep(100);
 		}
     
 		double Avgtemp1 = Totaltemp1 / datapoints2;
@@ -166,38 +254,44 @@ public class Run {
 		
 		System.out.println("Input 1 = " + Avgtemp1);
 		System.out.println("Input 2 = " + Avgtemp2);
-		System.out.println("Difference = " + (Avgtemp1 - Avgtemp2));
+		
+		System.out.println("Wind speed: " + windcal * (Math.abs(Avgtemp1 - Avgtemp2) - 8));
+		
+//=========== Lower Boom Arm	
+//		r.moveServo(RXTXRobot.SERVO1, 180);
 	}
 
 	public int getMoveTime(double distance) {
-		double dbl = (distance / 3) * 7700;
+		double dbl = (Math.abs(distance) * movecal);
 		int t = (int) dbl;
 		return t;
 	}
 	
 	public int getTurnTime(int degrees) {
-//TODO calibrate the numbers for turning	
-		int d = degrees * 500;
+//TODO calibrate the numbers for turning
+		int d;
+		if (degrees > 0) {
+			d = (int)(Math.abs(degrees) * rturncal);
+			return d;
+		} else {
+			d = (int)(Math.abs(degrees) * lturncal);
+		}
 		return d;
 		}
 	
-	public int detectGap() {
-		int location;
-		run1.turn(45);
-		double left = run1.getPing();
-		run1.turn(-90);
-		double right = run1.getPing();
-		run1.turn(45);
-		
-		if (left  > right) {
-			location = 1;
+	public boolean detectGap() {
+		System.out.println("Running detectGap()");
+		if(run1.getPing() < 55) {
+			System.out.println("No Gap Detected");
+			return false;
 		} else {
-			location = 2;
+			System.out.println("Gap Detected");
+			return true;
 		}
-		return location;
 	}
 	
 	public double getPing() {
+		System.out.println("Running getPing()");
 		int datapoints = 10;
 		int[] rawData = new int[datapoints]; 
 		int rawTotal = 0;
@@ -205,7 +299,7 @@ public class Run {
 		for (int c = 0; c < datapoints; c++) {
 			rawData[c] = r.getPing(PING_PIN);
 			rawTotal = rawTotal + rawData[c];
-			r.sleep(50);
+			r.sleep(20);
 		}
 		double rawAvg = (double) rawTotal / (double) datapoints;
 		System.out.println();
@@ -214,8 +308,8 @@ public class Run {
 	}
 	
 	public void moveUntilBumped() {
-		int bsAnalogPin = 2;
-		boolean notBumped = true;
+		System.out.println("Moving until bumped");
+		notBumped = true;
 		while(notBumped) { //run this loop until the sensor is bumped
 			
 			
@@ -226,7 +320,9 @@ public class Run {
 			
 			r.refreshAnalogPins(); 
 			AnalogPin temp = r.getAnalogPin(bsAnalogPin); //get pin data
-			if(temp.getValue() < 950) { //if the data dips below 950, set the boolean to false, exiting while loop
+			System.out.println(temp.getValue());
+			if(temp.getValue() < 500) { //if the data dips below 500, set the boolean to false, exiting while loop
+				System.out.println("BUMPED");
 				notBumped=false;
 			}
 		}
@@ -234,8 +330,28 @@ public class Run {
 	}
 	
 	public void conductivity() {
-		r.moveServo(RXTXRobot.SERVO1, 180); // Move Servo 1 to location 30
-		r.sleep(4000);
+//========== Lower conductivity arm
+		System.out.println("Running conductivity program");
+	//	r.moveServo(RXTXRobot.SERVO1, 180); // Move Servo 1 to location 30
+	//	r.sleep(4000);
+		
 //===========Conductivity logic
+		r.refreshAnalogPins();
+		int conductivity = r.getConductivity();
+		int saturation = 500; 
+		System.out.println("Conductivity measurement: " + conductivity);
+		if (conductivity > saturation) {
+			System.out.println("Releasing ping pong ball.");
+			r.sleep(1000);
+//			r.moveServo(RXTXRobot.SERVO2, 150);
+		} else {
+			System.out.println("Not releasing ping pong ball.");
+		}
 	}
+	
+	public void resetServo(int servo) {
+		System.out.println("Resetting servo");
+		r.moveServo(servo, 180);
+	}
+	
 }
