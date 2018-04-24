@@ -1,9 +1,5 @@
 //Positive turning is right
 
-//TODO 	clean up the print out
-//		simplify each section into its own function, including stuff like the dynamic wall
-
-
 import rxtxrobot.*;
 
 public class Run {
@@ -121,8 +117,7 @@ public class Run {
 	public Run(int x) {
 	}
 	
-	public void turn(int degrees) {
-//I'm just guessing on all the numbers here		
+	public void turn(int degrees) {	
 		int turnspeed;
 		if (degrees > 0) {
 			turnspeed = 300;
@@ -354,30 +349,6 @@ public class Run {
 		r.sleep(1000);
 		run1.turn(90);
 		run1.move(3, 350);
-		
-
-		/*----------------------------------------------------------------------
-		  if (run1.getPing() < 50) {
-		 
-			System.out.println("We will run into the right wall first");
-			run1.moveUntilBumped(); 		System.out.println("Line 108");
-			run1.move(backup, speed2);		
-			
-			run1.turn(-90);					System.out.println("Line 112");
-			
-			run1.moveUntilBumped();
-			run1.move(backup, speed2);		System.out.println("Line 116");
-			
-			run1.turn(90);					System.out.println("Line 119");
-			
-			run1.moveUntilBumped();			System.out.println("Line 122");
-			run1.move((backup / 2), speed2);
-			
-			run1.turn(90);					System.out.println("Line 126");
-		} else {
-			System.out.println("We will run into the left wall first, and I don't know what to do.");
-		}
-		-------------------------------------------------------------------*/
 	}
 	
 }
