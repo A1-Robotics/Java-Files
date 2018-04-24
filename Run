@@ -1,4 +1,8 @@
-//Positive degrees means it is turning is right
+//Positive turning is right
+
+//TODO 	clean up the print out
+//		simplify each section into its own function, including stuff like the dynamic wall
+
 
 import rxtxrobot.*;
 
@@ -10,140 +14,100 @@ public class Run {
 //======================== Pins =======================//	
 	// Digital Pins
 	final private static int PING_PIN = 11;
-	final private static int servo1pin = 9; //boom arm servo
-	final private static int servo2pin = 8; //ping pong ball servo	
+	final private static int servo1pin = 10; //ping pong ball servo
+	final private static int servo2pin = 8; //conductivity servo	
 	final private static int motor1pin = 5;
 	final private static int motor2pin = 6;
+	final private static int motor3pin = 4;
 	
 	// Analog Pins
 	final private static int bsAnalogPin = 2;
+	final private static int tempPinNumber = 0; //ping pong ball
+	final private static int windPinNumber = 1; //open thermister 
 
 //================== Other variables ==================//
-	final private static double backup =  (-1 * .2) ; //this is the distance in meters the robot should back up after bumping the wall in order to turn
+	final private static double backup =  -.2; //this is the distance in meters the robot should back up after bumping the wall in order to turn
 	final private static int pausetime = 1000; //the amount of time the robot will pause between segments of the run
 	final private static int speed1 = 250; //forward speed
 	final private static int speed2 = 150; //backup speed
-	final private static double rturncal = 15; //should be around 16
-	final private static double lturncal = 13.3;
-	//negative degrees is left
-	final private static double movecal = 2567; //should be around 2567
+	final private static double rturncal = 13.9; //should be around 15
+	final private static double lturncal = 13.9; //should be around 15
+	final private static double movecal = 2667; //should be around 2567
 	final private static double lrcal = 45; //should be around 42 //negative is more left
-	final private static double windcal = .1;
+	
+	final public static double tempSlope = -11.00167506; //should be around -11
+	final public static double tempIntercept = 3830.700252; //should be around 3800
+	final public static double windSlope = -1.503283837;
+	final public static double windIntercept = -10.56099934;
+	
 	private static boolean notBumped;
+	public static int turnmultiplier = 1; //START THIS AT 1 UNLESS YOU KNOW YOURE RUNNING ON THE LEFT STARTING BOX
 //=====================================================//
 	
 	public static void main(String[] args) {
+	// Initialization
 		r.setPort("COM3"); // Set the port to COM3
 //		r.setVerbose(true); // Turn on debugging messages
 		r.connect();		
 		r.attachMotor(RXTXRobot.MOTOR1, motor1pin); //left motor  attach motors
 		r.attachMotor(RXTXRobot.MOTOR2, motor2pin); //right motor
+		r.attachMotor(RXTXRobot.MOTOR3, motor3pin); //servo motor
 		r.attachServo(RXTXRobot.SERVO1, servo1pin); //Connect SERVO1, the boom to servo1pin
 		r.attachServo(RXTXRobot.SERVO2, servo2pin); //Connect SERVO2, the pingpong ball arm to servo2pin
 		System.out.println();
-		r.sleep(500);
 		
-		//CALIBRATION
-//		run1.move(1, speed1);
-//		run1.turn(360);
-//	 	run1.turn(-360);	
+	// Calibration
+//		run1.move(3, 350);
+//		run1.turn(180);
+//	 	run1.turn(-180);	
 //		run1.liftBoom(); 
 //		run1.moveUntilBumped();
-
-/*		// 1. starting box
-		run1.move(.5, speed1);
+		run1.conductivity();
+		
+/*	// 1. starting box
+		run1.move(.6, speed1);
 		r.sleep(pausetime);
-		run1.turn(93);
+		run1.turn(-90); //right
+		double right = run1.getPing();
+		run1.turn(180);
+		double left = run1.getPing();
+		run1.turn(-90);
+		if (right < left){
+			turnmultiplier = 1;
+		} else {
+			turnmultiplier = -1;
+		}
+		System.out.println("turnmultiplier = " + turnmultiplier);
+		run1.turn(90);
 	
- 		// 2. dynamic wall
- 		run1.moveUntilBumped();
- 		run1.move(backup, speed2);
-		boolean dynamicwall = true;
- 		while (dynamicwall) {
- 			if (run1.getPing() < 40) {
- 				System.out.println("The wall is still there");
- 				continue;
- 			} else {
- 				System.out.println("The wall has been lifted! Proceeding.");
- 				dynamicwall = false;
- 				break;
- 			}
- 		}
+ 	// 2. dynamic wall
+ 		run1.dynamicWall();
+ 		r.sleep(2000);
  		
- 		r.sleep(3000);
- 		
- 		// 3. run forward
-		run1.move(1.2, speed1 + 70);
+ 	// 3. climb onto elevated air region
+		run1.move(1.35, speed1 + 70);
 		r.sleep(pausetime);
 		
-		// 4. lift boom
+	// 4. raise probe 75cm and take temperature and wind speed readings
 		run1.liftBoom();
 		r.sleep(pausetime);
 		
-		// 5. turn 90 degrees counterclockwise
-		run1.turn(-90);
-		r.sleep(pausetime);
-		
-		// 6. run forward
-		run1.move(1, speed1);
-		r.sleep(pausetime);							System.out.println("Line 87");
-		
-//TODO calibrate numbers for detecting the gap		
-		// 7. turn & detect gap
-		run1.turn(-115);							System.out.println("First left turn.");
-		boolean nogap = true;						System.out.println("Line 92");
-		boolean b;
-		while(nogap) {
-			b = run1.detectGap();					System.out.println("");
-			if (b == false) {
-				System.out.println("no gap.");
-				run1.turn(90);
-				run1.move(.25,  speed1);
-				run1.turn(-90);
-			} else {
-				System.out.println("gap.");
-				run1.turn(90);
-				run1.move(.2, speed1);
-				run1.turn(-90);
-				break;
-//				run1.move(3, speed1);
-			}
-		}
-		
-		
+	// 5. navigate relocatable gap
+		run1.navigateRelocatableGap();
 
-*/
-		// 8. orient with bridge
-		run1.moveUntilBumped(); 		System.out.println("Line 108");
-		run1.move(backup, speed2);		
-//		r.sleep(pausetime);	
+	// 6. navigate to bridge
+		run1.navigateToBridge();
 		
-		run1.turn(-90);					System.out.println("Line 112");
-//		r.sleep(pausetime);
-		
-		run1.moveUntilBumped();
-		run1.move(backup, speed2);		System.out.println("Line 116");
-//		r.sleep(pausetime);
-		
-		run1.turn(90);					System.out.println("Line 119");
-//		r.sleep(pausetime);
-		
-		run1.moveUntilBumped();			System.out.println("Line 122");
-		run1.move(backup, speed2);
-//		r.sleep(pausetime);
-		
-		run1.turn(90);					System.out.println("Line 126");
-		
-/*		// 9. cross bridge
+	// 7. cross bridge and navigate to sandbox
 		run1.moveUntilBumped();
 		run1.move(backup, speed2);
 		run1.turn(90);
 		run1.moveUntilBumped();
 		
-/*		// 10. conductivity
+	// 8. deploy sensor, test conductivity, and release ping pong ball
 		run1.conductivity();
-*/
- 		// 11. closing
+
+*/ 	// Closing
 		System.out.println("Closing in 3");
 		r.sleep(1000);
 		System.out.println("Closing in 2");
@@ -161,16 +125,16 @@ public class Run {
 //I'm just guessing on all the numbers here		
 		int turnspeed;
 		if (degrees > 0) {
-			turnspeed = 250;
+			turnspeed = 300;
 		} else {
-			turnspeed = -250;
+			turnspeed = -300;
 		}
 		int turntime = getTurnTime(degrees);
 		//s was 250 for Sprint 2
 		//t was 7700 for Sprint 3
 
 		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, turnspeed, RXTXRobot.MOTOR2, turnspeed, 0); // Run both motors forward indefinitely
+		r.runMotor(RXTXRobot.MOTOR1, turnspeed * turnmultiplier, RXTXRobot.MOTOR2, turnspeed * turnmultiplier, 0); // Run both motors forward indefinitely
 		r.sleep(turntime); // Pause execution for turntime in ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); // Stop both motors
 	}
@@ -190,75 +154,46 @@ public class Run {
 		//t was 7700 for Sprint 3
 		
 		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, (int)(movespeed - lrcal), RXTXRobot.MOTOR2, (-1 * movespeed), 0); // Run both motors forward indefinitely
+		r.runMotor(RXTXRobot.MOTOR1, (int)(movespeed - (lrcal/2)), RXTXRobot.MOTOR2, (-1 * (int)(movespeed + (lrcal/2))), 0); // Run both motors forward indefinitely
 		r.sleep(movetime); // Pause execution for movetime ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1,0,RXTXRobot.MOTOR2,0,0); // Stop both motors
 	}
 	
-	public void liftBoom() {
-//===========Move Servo		
-		r.moveServo(RXTXRobot.SERVO1, 5); 
-	
+	public void liftBoom() {	
+// Lift Boom 2.0
+		r.runMotor(RXTXRobot.MOTOR3, -100, 600);
 		
-//=========== Temperature		
-		System.out.println("Getting Thermometer reading: ");
-		r.refreshAnalogPins(); // Cache the Analog pin information	
-		int thermoAnalogPin = 1; //this is the long red and black thermister
-		 
+//=========== New Temp and Wind reading		
 		int datapoints = 10;
-		int[] rawData = new int[datapoints]; 
-		int rawTotal = 0;
+		int tempTotal = 0;
+		int windTotal = 0;
 		
 		for (int c = 0; c < datapoints; c++) {
 			r.refreshAnalogPins();
-			AnalogPin temp = r.getAnalogPin(thermoAnalogPin); //get pin data
-			rawData[c] = temp.getValue();
-			rawTotal = rawTotal + rawData[c];
-//			System.out.println(c + 1 + "\t" + rawData[c]);
-			r.sleep(100);
-		}
-    
-		double rawAvg = (double) rawTotal / (double) datapoints;
-		System.out.println("The probe read the value: " + rawAvg);
-		System.out.println("In volts: " + (rawAvg * (5.0/1023.0)));
-		
-		double slope = -11.05667506;										//was -11.05667506
-		double intercept = 3827.700252;										//was 3827.700252
-		double temp = ((rawAvg - intercept)/slope)-273;
-		System.out.println();
-		System.out.println("It is " + (temp + 2.5) + " degrees Celsius");
-		
-//=========== Wind readings
-		System.out.println("Getting Anamometer reading: ");
-		r.refreshAnalogPins(); // Cache the Analog pin information	
-		
-		int windAnalogPin = 0;
-		 
-		int Totaltemp1 = 0;
-		int Totaltemp2 = 0;
-		
-		int datapoints2 = 10;
-		for (int c = 0; c < datapoints2; c++) {
-			r.refreshAnalogPins();
-			AnalogPin temp0 = r.getAnalogPin(windAnalogPin); //get pin data
-			AnalogPin temp2 = r.getAnalogPin(thermoAnalogPin); //get pin data
+			AnalogPin windPin = r.getAnalogPin(windPinNumber); //get pin data
+			AnalogPin tempPin = r.getAnalogPin(tempPinNumber); //get pin data
 			
-			Totaltemp1 = Totaltemp1 + temp0.getValue();
-			Totaltemp2 = Totaltemp2 + temp2.getValue();
+			tempTotal = tempTotal + tempPin.getValue();
+			windTotal = windTotal + windPin.getValue();
 			
 			r.sleep(100);
 		}
-    
-		double Avgtemp1 = Totaltemp1 / datapoints2;
-		double Avgtemp2 = Totaltemp2 / datapoints2;
 		
-		System.out.println("Input 1 = " + Avgtemp1);
-		System.out.println("Input 2 = " + Avgtemp2);
+		double tempAvg = (double) tempTotal / (double) datapoints;
+		double windAvg = (double) windTotal / (double) datapoints;
+		double diff = tempAvg - windAvg;
 		
-		System.out.println("Wind speed: " + windcal * (Math.abs(Avgtemp1 - Avgtemp2) - 8));
+		double temp = ((tempAvg - tempIntercept) / tempSlope) - 273;
+		double wind = ((diff - windIntercept) / windSlope);
 		
+		System.out.println("Raw thermo = " + tempAvg);
+		System.out.println("Raw Wind = " + diff);
+		
+		System.out.println("Temperature: " + temp + " degrees Celsius.");
+		System.out.println("Wind speed: " + wind + " kph");
 //=========== Lower Boom Arm	
-//		r.moveServo(RXTXRobot.SERVO1, 180);
+		r.runMotor(RXTXRobot.MOTOR3, 100, 500);
+		
 	}
 
 	public int getMoveTime(double distance) {
@@ -270,11 +205,14 @@ public class Run {
 	public int getTurnTime(int degrees) {
 //TODO calibrate the numbers for turning
 		int d;
-		if (degrees > 0) {
+		if (((degrees > 0) && (turnmultiplier > 0)) || ((degrees < 0) && (turnmultiplier < 0))) {
 			d = (int)(Math.abs(degrees) * rturncal);
 			return d;
-		} else {
+		} else if ((degrees < 0) && (turnmultiplier > 0) || (degrees > 0) && (turnmultiplier < 0)) {
 			d = (int)(Math.abs(degrees) * lturncal);
+		} else {
+			d = 0;
+			System.out.println("You fucked up getTurnTime(), line 253.");
 		}
 		return d;
 		}
@@ -302,8 +240,8 @@ public class Run {
 			r.sleep(20);
 		}
 		double rawAvg = (double) rawTotal / (double) datapoints;
-		System.out.println();
 		System.out.println("Distance measured: " + rawAvg);
+		System.out.println();
 		return rawAvg;
 	}
 	
@@ -330,28 +268,116 @@ public class Run {
 	}
 	
 	public void conductivity() {
-//========== Lower conductivity arm
 		System.out.println("Running conductivity program");
-	//	r.moveServo(RXTXRobot.SERVO1, 180); // Move Servo 1 to location 30
-	//	r.sleep(4000);
-		
-//===========Conductivity logic
+		r.moveServo(RXTXRobot.SERVO2, 180); // Move conductivity arm
 		r.refreshAnalogPins();
 		int conductivity = r.getConductivity();
-		int saturation = 500; 
 		System.out.println("Conductivity measurement: " + conductivity);
-		if (conductivity > saturation) {
-			System.out.println("Releasing ping pong ball.");
-			r.sleep(1000);
-//			r.moveServo(RXTXRobot.SERVO2, 150);
-		} else {
-			System.out.println("Not releasing ping pong ball.");
-		}
+		r.sleep(1000);
+		r.moveServo(RXTXRobot.SERVO1, 0);
+		
 	}
 	
 	public void resetServo(int servo) {
 		System.out.println("Resetting servo");
 		r.moveServo(servo, 180);
+	}
+	
+	public void startingBox() {
+/*		run1.move(.6, speed1);
+		r.sleep(pausetime);
+		run1.turn(-90); //right
+		double right = run1.getPing();
+		run1.turn(180);
+		double left = run1.getPing();
+		run1.turn(-90);
+		if (right < left){
+			turnmultiplier = 1;
+		} else {
+			turnmultiplier = -1;
+		}
+		System.out.println("turnmultiplier = " + turnmultiplier);
+		run1.turn(90);
+*/
+	}
+	
+	public void dynamicWall() {
+ 		run1.moveUntilBumped();
+ 		run1.move(backup, speed2);
+		boolean dynamicwall = true;
+ 		while (dynamicwall) {
+ 			if (run1.getPing() < 40) {
+ 				System.out.println("The wall is still there");
+ 				continue;
+ 			} else {
+ 				System.out.println("The wall has been lifted! Proceeding.");
+ 				dynamicwall = false;
+ 				break;
+ 			}
+ 		}
+	}
+	
+	public void navigateRelocatableGap() {
+		run1.turn(-90);
+		r.sleep(pausetime);
+		run1.move(1, speed1);
+		r.sleep(pausetime);	
+		run1.turn(-115);							
+		boolean nogap = true;	
+		boolean b;
+		while(nogap) {
+			b = run1.detectGap();		
+			if (b == false) {
+				System.out.println("no gap.");
+				run1.turn(90);
+				run1.move(.25,  speed1);
+				run1.turn(-90);
+			} else {
+				System.out.println("gap.");
+				run1.turn(90);
+				run1.move(.2, speed1);
+				run1.turn(-90);
+				break;
+			}
+		}
+	}
+	
+	public void navigateToBridge() {
+		run1.move(.9, speed1);
+		run1.turn(-90);
+		run1.moveUntilBumped();
+		run1.move(backup, speed2);
+		r.sleep(1000);
+		run1.turn(90);
+		run1.moveUntilBumped();
+		run1.move(backup, speed2);
+		r.sleep(1000);
+		run1.turn(90);
+		run1.move(3, 350);
+		
+
+		/*----------------------------------------------------------------------
+		  if (run1.getPing() < 50) {
+		 
+			System.out.println("We will run into the right wall first");
+			run1.moveUntilBumped(); 		System.out.println("Line 108");
+			run1.move(backup, speed2);		
+			
+			run1.turn(-90);					System.out.println("Line 112");
+			
+			run1.moveUntilBumped();
+			run1.move(backup, speed2);		System.out.println("Line 116");
+			
+			run1.turn(90);					System.out.println("Line 119");
+			
+			run1.moveUntilBumped();			System.out.println("Line 122");
+			run1.move((backup / 2), speed2);
+			
+			run1.turn(90);					System.out.println("Line 126");
+		} else {
+			System.out.println("We will run into the left wall first, and I don't know what to do.");
+		}
+		-------------------------------------------------------------------*/
 	}
 	
 }
