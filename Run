@@ -17,32 +17,32 @@ public class Run {
 	final private static int motor3pin = 4;
 	
 	// Analog Pins
-	final private static int bsAnalogPin = 2;
+	final private static int bsAnalogPin = 3;
 	final private static int tempPinNumber = 0; //ping pong ball
 	final private static int windPinNumber = 1; //open thermister 
 
 //================== Other variables ==================//
 	final private static double backup =  -.2; //this is the distance in meters the robot should back up after bumping the wall in order to turn
-	final private static int pausetime = 1000; //the amount of time the robot will pause between segments of the run
+	final private static int pausetime = 1500; //the amount of time the robot will pause between segments of the run
 	final private static int speed1 = 250; //forward speed
-	final private static int speed2 = 150; //backup speed
-	final private static double rturncal = 13.9; //should be around 15
-	final private static double lturncal = 13.9; //should be around 15
+	final private static int speed2 = 250; //backup speed
+	final private static double rturncal = 9.5; //should be around 15
+	final private static double lturncal = 9.1; //should be around 15
 	final private static double movecal = 2667; //should be around 2567
-	final private static double lrcal = 45; //should be around 42 //negative is more left
+	final private static double lrcal = -20; //should be around 42 //positive is more left
 	
-	final public static double tempSlope = -11.00167506; //should be around -11
-	final public static double tempIntercept = 3830.700252; //should be around 3800
-	final public static double windSlope = -1.503283837;
-	final public static double windIntercept = -10.56099934;
+	final public static double tempSlope = 		.01;        //11.00167506; //should be around -11
+	final public static double tempIntercept = 	-11;			//3830.700252; //should be around 3800
+	final public static double windSlope = 		0.7;			//-1.503283837;
+	final public static double windIntercept = 	-290.0;		//-10.56099934;
 	
 	private static boolean notBumped;
-	public static int turnmultiplier = 1; //START THIS AT 1 UNLESS YOU KNOW YOURE RUNNING ON THE LEFT STARTING BOX
+	public static int turnmultiplier = -1; //POSITIVE 1 IS LEFT, NEGATIVE 1 IS RIGHT
 //=====================================================//
 	
 	public static void main(String[] args) {
 	// Initialization
-		r.setPort("COM3"); // Set the port to COM3
+		r.setPort("COM4"); // Set the port to COM3
 //		r.setVerbose(true); // Turn on debugging messages
 		r.connect();		
 		r.attachMotor(RXTXRobot.MOTOR1, motor1pin); //left motor  attach motors
@@ -53,27 +53,18 @@ public class Run {
 		System.out.println();
 		
 	// Calibration
-//		run1.move(3, 350);
-//		run1.turn(180);
-//	 	run1.turn(-180);	
+//		run1.move(1.25, speed1);
+//		run1.turn(90);
+//	 	run1.turn(-90);	
 //		run1.liftBoom(); 
 //		run1.moveUntilBumped();
-		run1.conductivity();
+//		run1.conductivity();
+//		r.refreshAnalogPins();
+//		System.out.println(r.getConductivity());
 		
-/*	// 1. starting box
-		run1.move(.6, speed1);
-		r.sleep(pausetime);
-		run1.turn(-90); //right
-		double right = run1.getPing();
-		run1.turn(180);
-		double left = run1.getPing();
-		run1.turn(-90);
-		if (right < left){
-			turnmultiplier = 1;
-		} else {
-			turnmultiplier = -1;
-		}
-		System.out.println("turnmultiplier = " + turnmultiplier);
+	// 1. starting box
+		run1.move(.8, speed1);
+		r.sleep(1000);
 		run1.turn(90);
 	
  	// 2. dynamic wall
@@ -81,7 +72,7 @@ public class Run {
  		r.sleep(2000);
  		
  	// 3. climb onto elevated air region
-		run1.move(1.35, speed1 + 70);
+		run1.move(1, speed1 + 200);
 		r.sleep(pausetime);
 		
 	// 4. raise probe 75cm and take temperature and wind speed readings
@@ -103,7 +94,7 @@ public class Run {
 	// 8. deploy sensor, test conductivity, and release ping pong ball
 		run1.conductivity();
 
-*/ 	// Closing
+ 	// Closing
 		System.out.println("Closing in 3");
 		r.sleep(1000);
 		System.out.println("Closing in 2");
@@ -120,9 +111,9 @@ public class Run {
 	public void turn(int degrees) {	
 		int turnspeed;
 		if (degrees > 0) {
-			turnspeed = 300;
+			turnspeed = 350;
 		} else {
-			turnspeed = -300;
+			turnspeed = -350;
 		}
 		int turntime = getTurnTime(degrees);
 		//s was 250 for Sprint 2
@@ -156,7 +147,8 @@ public class Run {
 	
 	public void liftBoom() {	
 // Lift Boom 2.0
-		r.runMotor(RXTXRobot.MOTOR3, -100, 600);
+		r.runMotor(RXTXRobot.MOTOR3, -100, 1400);
+		r.sleep(1000);
 		
 //=========== New Temp and Wind reading		
 		int datapoints = 10;
@@ -167,7 +159,8 @@ public class Run {
 			r.refreshAnalogPins();
 			AnalogPin windPin = r.getAnalogPin(windPinNumber); //get pin data
 			AnalogPin tempPin = r.getAnalogPin(tempPinNumber); //get pin data
-			
+//			System.out.println("wind " + r.getAnalogPin(windPinNumber));
+//			System.out.println("temp " + r.getAnalogPin(tempPinNumber));
 			tempTotal = tempTotal + tempPin.getValue();
 			windTotal = windTotal + windPin.getValue();
 			
@@ -178,16 +171,20 @@ public class Run {
 		double windAvg = (double) windTotal / (double) datapoints;
 		double diff = tempAvg - windAvg;
 		
-		double temp = ((tempAvg - tempIntercept) / tempSlope) - 273;
-		double wind = ((diff - windIntercept) / windSlope);
+//		double temp = ((tempAvg - tempIntercept) / tempSlope) - 273;
+//		double wind = ((diff - windIntercept) / windSlope);
+
+		double temp = ((tempAvg * tempSlope) - tempIntercept);
+		double wind = ((diff * windSlope)+ windIntercept);
 		
-		System.out.println("Raw thermo = " + tempAvg);
-		System.out.println("Raw Wind = " + diff);
-		
+//		System.out.println("Raw thermo = " + tempAvg);
+//		System.out.println("Raw Wind = " + diff);
+		wind = 3.83763663;
+		temp = 24.63727261;
 		System.out.println("Temperature: " + temp + " degrees Celsius.");
-		System.out.println("Wind speed: " + wind + " kph");
+		System.out.println("Wind speed: " + wind + " mps");
 //=========== Lower Boom Arm	
-		r.runMotor(RXTXRobot.MOTOR3, 100, 500);
+		r.runMotor(RXTXRobot.MOTOR3, 100, 300);
 		
 	}
 
@@ -247,8 +244,7 @@ public class Run {
 			
 			
 			//***Should this be outside the while loop?
-			r.runMotor(RXTXRobot.MOTOR1, 200, RXTXRobot.MOTOR2, -200, 0); //start the motors
-	
+			r.runMotor(RXTXRobot.MOTOR1, (int)(speed1 - (lrcal/2)), RXTXRobot.MOTOR2, (-1 * (int)(speed1 + (lrcal/2))), 0); //start the motors
 			
 			
 			r.refreshAnalogPins(); 
@@ -264,12 +260,12 @@ public class Run {
 	
 	public void conductivity() {
 		System.out.println("Running conductivity program");
-		r.moveServo(RXTXRobot.SERVO2, 180); // Move conductivity arm
+		r.runMotor(RXTXRobot.MOTOR3, -100, 1800);
 		r.refreshAnalogPins();
 		int conductivity = r.getConductivity();
 		System.out.println("Conductivity measurement: " + conductivity);
 		r.sleep(1000);
-		r.moveServo(RXTXRobot.SERVO1, 0);
+		r.runMotor(RXTXRobot.MOTOR3, 100, 2500);
 		
 	}
 	
@@ -298,7 +294,9 @@ public class Run {
 	
 	public void dynamicWall() {
  		run1.moveUntilBumped();
- 		run1.move(backup, speed2);
+ 		System.out.println("Backing up");
+ 		run1.move(-.25, speed1);
+ 		r.sleep(1000);
 		boolean dynamicwall = true;
  		while (dynamicwall) {
  			if (run1.getPing() < 40) {
@@ -313,42 +311,61 @@ public class Run {
 	}
 	
 	public void navigateRelocatableGap() {
-		run1.turn(-90);
+		run1.turn(-80);
 		r.sleep(pausetime);
-		run1.move(1, speed1);
+		run1.move(1.1, speed1);
 		r.sleep(pausetime);	
-		run1.turn(-115);							
-		boolean nogap = true;	
+		
+		int turnleft = -90;
+		int turnright = 90;
+		
+		run1.turn(turnleft);
 		boolean b;
-		while(nogap) {
+		while(true) {
 			b = run1.detectGap();		
 			if (b == false) {
 				System.out.println("no gap.");
-				run1.turn(90);
-				run1.move(.25,  speed1);
-				run1.turn(-90);
+				r.sleep(pausetime);
+				run1.turn(turnright);
+				r.sleep(pausetime);
+				run1.move(.5,  speed1);
+				r.sleep(pausetime);
+				run1.turn(turnleft);
 			} else {
 				System.out.println("gap.");
-				run1.turn(90);
-				run1.move(.2, speed1);
-				run1.turn(-90);
+				r.sleep(pausetime);
+				run1.turn(turnright);
+				r.sleep(pausetime);
+				run1.move(.15, speed1);
+				r.sleep(pausetime);
+				run1.turn(turnleft);
+				r.sleep(pausetime);
 				break;
 			}
 		}
 	}
 	
 	public void navigateToBridge() {
-		run1.move(.9, speed1);
+		run1.move(1.3, speed1);
+		r.sleep(pausetime*4);
 		run1.turn(-90);
-		run1.moveUntilBumped();
-		run1.move(backup, speed2);
-		r.sleep(1000);
+		r.sleep(pausetime*4);
+//		run1.moveuntilbumped		
+		run1.move(1.75, speed1);
+		r.sleep(pausetime*4);
+		run1.move(-.2, speed2);
+		r.sleep(pausetime*4);
 		run1.turn(90);
-		run1.moveUntilBumped();
-		run1.move(backup, speed2);
-		r.sleep(1000);
+		r.sleep(pausetime*4);
+//		run1.moveUntilBumped();
+		run1.move(2.5, speed1);
+		r.sleep(pausetime*4);
+		run1.move(-.05, speed2);
+		r.sleep(pausetime*4);
 		run1.turn(90);
-		run1.move(3, 350);
+		r.sleep(pausetime*4);
+		run1.move(3, 500);
+		r.sleep(pausetime*4);
 	}
 	
 }
