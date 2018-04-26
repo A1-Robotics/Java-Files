@@ -105,25 +105,7 @@ public class Run {
 		
 	}
 	
-	public Run(int x) {
-	}
-	
-	public void turn(int degrees) {	
-		int turnspeed;
-		if (degrees > 0) {
-			turnspeed = 350;
-		} else {
-			turnspeed = -350;
-		}
-		int turntime = getTurnTime(degrees);
-		//s was 250 for Sprint 2
-		//t was 7700 for Sprint 3
 
-		r.refreshAnalogPins();
-		r.runMotor(RXTXRobot.MOTOR1, turnspeed * turnmultiplier, RXTXRobot.MOTOR2, turnspeed * turnmultiplier, 0); // Run both motors forward indefinitely
-		r.sleep(turntime); // Pause execution for turntime in ticks, but the motors keep running.
-		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); // Stop both motors
-	}
 	
 	public void move(double distance, int speed) {
 	//	int s = getMoveSpeed(distance);
@@ -143,6 +125,83 @@ public class Run {
 		r.runMotor(RXTXRobot.MOTOR1, (int)(movespeed - (lrcal/2)), RXTXRobot.MOTOR2, (-1 * (int)(movespeed + (lrcal/2))), 0); // Run both motors forward indefinitely
 		r.sleep(movetime); // Pause execution for movetime ticks, but the motors keep running.
 		r.runMotor(RXTXRobot.MOTOR1,0,RXTXRobot.MOTOR2,0,0); // Stop both motors
+	}
+	
+	public void moveUntilBumped() {
+		System.out.println("Moving until bumped");
+		notBumped = true;
+		while(notBumped) { //run this loop until the sensor is bumped
+			
+			
+			//***Should this be outside the while loop?
+			r.runMotor(RXTXRobot.MOTOR1, (int)(speed1 - (lrcal/2)), RXTXRobot.MOTOR2, (-1 * (int)(speed1 + (lrcal/2))), 0); //start the motors
+			
+			
+			r.refreshAnalogPins(); 
+			AnalogPin temp = r.getAnalogPin(bsAnalogPin); //get pin data
+			System.out.println(temp.getValue());
+			if(temp.getValue() < 500) { //if the data dips below 500, set the boolean to false, exiting while loop
+				System.out.println("BUMPED");
+				notBumped=false;
+			}
+		}
+		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); //turn off the motors
+	}
+		
+	public void turn(int degrees) {	
+		int turnspeed;
+		if (degrees > 0) {
+			turnspeed = 350;
+		} else {
+			turnspeed = -350;
+		}
+		int turntime = getTurnTime(degrees);
+		//s was 250 for Sprint 2
+		//t was 7700 for Sprint 3
+
+		r.refreshAnalogPins();
+		r.runMotor(RXTXRobot.MOTOR1, turnspeed * turnmultiplier, RXTXRobot.MOTOR2, turnspeed * turnmultiplier, 0); // Run both motors forward indefinitely
+		r.sleep(turntime); // Pause execution for turntime in ticks, but the motors keep running.
+		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); // Stop both motors
+	}
+	
+	public int getMoveTime(double distance) {
+		double dbl = (Math.abs(distance) * movecal);
+		int t = (int) dbl;
+		return t;
+	}
+	
+	public int getTurnTime(int degrees) {
+//TODO calibrate the numbers for turning
+		int d;
+		if (((degrees > 0) && (turnmultiplier > 0)) || ((degrees < 0) && (turnmultiplier < 0))) {
+			d = (int)(Math.abs(degrees) * rturncal);
+			return d;
+		} else if ((degrees < 0) && (turnmultiplier > 0) || (degrees > 0) && (turnmultiplier < 0)) {
+			d = (int)(Math.abs(degrees) * lturncal);
+		} else {
+			d = 0;
+			System.out.println("You fucked up getTurnTime(), line 253.");
+		}
+		return d;
+		}
+
+	public void dynamicWall() {
+ 		run1.moveUntilBumped();
+ 		System.out.println("Backing up");
+ 		run1.move(-.25, speed1);
+ 		r.sleep(1000);
+		boolean dynamicwall = true;
+ 		while (dynamicwall) {
+ 			if (run1.getPing() < 40) {
+ 				System.out.println("The wall is still there");
+ 				continue;
+ 			} else {
+ 				System.out.println("The wall has been lifted! Proceeding.");
+ 				dynamicwall = false;
+ 				break;
+ 			}
+ 		}
 	}
 	
 	public void liftBoom() {	
@@ -187,38 +246,6 @@ public class Run {
 		r.runMotor(RXTXRobot.MOTOR3, 100, 300);
 		
 	}
-
-	public int getMoveTime(double distance) {
-		double dbl = (Math.abs(distance) * movecal);
-		int t = (int) dbl;
-		return t;
-	}
-	
-	public int getTurnTime(int degrees) {
-//TODO calibrate the numbers for turning
-		int d;
-		if (((degrees > 0) && (turnmultiplier > 0)) || ((degrees < 0) && (turnmultiplier < 0))) {
-			d = (int)(Math.abs(degrees) * rturncal);
-			return d;
-		} else if ((degrees < 0) && (turnmultiplier > 0) || (degrees > 0) && (turnmultiplier < 0)) {
-			d = (int)(Math.abs(degrees) * lturncal);
-		} else {
-			d = 0;
-			System.out.println("You fucked up getTurnTime(), line 253.");
-		}
-		return d;
-		}
-	
-	public boolean detectGap() {
-		System.out.println("Running detectGap()");
-		if(run1.getPing() < 55) {
-			System.out.println("No Gap Detected");
-			return false;
-		} else {
-			System.out.println("Gap Detected");
-			return true;
-		}
-	}
 	
 	public double getPing() {
 		System.out.println("Running getPing()");
@@ -235,79 +262,17 @@ public class Run {
 		System.out.println("Distance measured: " + rawAvg);
 		System.out.println();
 		return rawAvg;
-	}
-	
-	public void moveUntilBumped() {
-		System.out.println("Moving until bumped");
-		notBumped = true;
-		while(notBumped) { //run this loop until the sensor is bumped
-			
-			
-			//***Should this be outside the while loop?
-			r.runMotor(RXTXRobot.MOTOR1, (int)(speed1 - (lrcal/2)), RXTXRobot.MOTOR2, (-1 * (int)(speed1 + (lrcal/2))), 0); //start the motors
-			
-			
-			r.refreshAnalogPins(); 
-			AnalogPin temp = r.getAnalogPin(bsAnalogPin); //get pin data
-			System.out.println(temp.getValue());
-			if(temp.getValue() < 500) { //if the data dips below 500, set the boolean to false, exiting while loop
-				System.out.println("BUMPED");
-				notBumped=false;
-			}
-		}
-		r.runMotor(RXTXRobot.MOTOR1, 0, RXTXRobot.MOTOR2, 0, 0); //turn off the motors
-	}
-	
-	public void conductivity() {
-		System.out.println("Running conductivity program");
-		r.runMotor(RXTXRobot.MOTOR3, -100, 1800);
-		r.refreshAnalogPins();
-		int conductivity = r.getConductivity();
-		System.out.println("Conductivity measurement: " + conductivity);
-		r.sleep(1000);
-		r.runMotor(RXTXRobot.MOTOR3, 100, 2500);
+	}	
 		
-	}
-	
-	public void resetServo(int servo) {
-		System.out.println("Resetting servo");
-		r.moveServo(servo, 180);
-	}
-	
-	public void startingBox() {
-/*		run1.move(.6, speed1);
-		r.sleep(pausetime);
-		run1.turn(-90); //right
-		double right = run1.getPing();
-		run1.turn(180);
-		double left = run1.getPing();
-		run1.turn(-90);
-		if (right < left){
-			turnmultiplier = 1;
+	public boolean detectGap() {
+		System.out.println("Running detectGap()");
+		if(run1.getPing() < 55) {
+			System.out.println("No Gap Detected");
+			return false;
 		} else {
-			turnmultiplier = -1;
+			System.out.println("Gap Detected");
+			return true;
 		}
-		System.out.println("turnmultiplier = " + turnmultiplier);
-		run1.turn(90);
-*/
-	}
-	
-	public void dynamicWall() {
- 		run1.moveUntilBumped();
- 		System.out.println("Backing up");
- 		run1.move(-.25, speed1);
- 		r.sleep(1000);
-		boolean dynamicwall = true;
- 		while (dynamicwall) {
- 			if (run1.getPing() < 40) {
- 				System.out.println("The wall is still there");
- 				continue;
- 			} else {
- 				System.out.println("The wall has been lifted! Proceeding.");
- 				dynamicwall = false;
- 				break;
- 			}
- 		}
 	}
 	
 	public void navigateRelocatableGap() {
@@ -368,4 +333,17 @@ public class Run {
 		r.sleep(pausetime*4);
 	}
 	
+	public void conductivity() {
+		System.out.println("Running conductivity program");
+		r.runMotor(RXTXRobot.MOTOR3, -100, 1800);
+		r.refreshAnalogPins();
+		int conductivity = r.getConductivity();
+		System.out.println("Conductivity measurement: " + conductivity);
+		r.sleep(1000);
+		r.runMotor(RXTXRobot.MOTOR3, 100, 2500);
+		
+	}
+	
+	public Run(int x) {
+	}
 }
